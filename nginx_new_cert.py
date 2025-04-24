@@ -24,10 +24,8 @@ def generate_ssl(domain_names, email=None, agree_tos=True):
         print("No domain names provided.")
         sys.exit(1)
 
-    python_path = f'"{virtual_environment_path}/bin/python"'
-
     # Build the base command
-    command = f"sudo {python_path} -m certbot certonly --standalone --non-interactive --preferred-challenges http"
+    command = f"sudo {virtual_environment_path}/bin/certbot certonly --standalone --non-interactive --preferred-challenges http"
 
     # Email handling
     if email:
@@ -41,7 +39,7 @@ def generate_ssl(domain_names, email=None, agree_tos=True):
 
     # Add domain flags
     for domain in domain_names:
-        command += ' -d' + domain
+        command += ' -d ' + domain
 
     run_command(command=command)
 
