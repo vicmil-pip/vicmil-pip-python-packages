@@ -2,6 +2,9 @@
 Installs everything necessary for this package
 
 Creates a new ssl certificate using certbot
+
+Inspired by:
+https://www.digitalocean.com/community/tutorials/how-to-use-certbot-standalone-mode-to-retrieve-let-s-encrypt-ssl-certificates-on-ubuntu-16-04
 """
 
 import subprocess
