@@ -1,93 +1,48 @@
-import pathlib
-import os
-import platform
-import importlib
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[0]))
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.append(str(Path(__file__).resolve().parents[2]))
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+sys.path.append(str(Path(__file__).resolve().parents[4]))
+sys.path.append(str(Path(__file__).resolve().parents[5]))
 
-def get_directory_path(__file__in, up_directories=0):
-    return str(pathlib.Path(__file__in).parents[up_directories].resolve()).replace("\\", "/")
+from vicmil_pip.packages.pyUtil import *
 
+import yaml
 
-def _python_virtual_environment(env_directory_path):
-    # Setup a python virtual environmet
-    os.makedirs(env_directory_path, exist_ok=True) # Ensure directory exists
-    my_os = platform.system()
-    if my_os == "Windows":
-        os.system(f'python -m venv "{env_directory_path}"')
-    else:
-        os.system(f'python3 -m venv "{env_directory_path}"')
-
-
-def _pip_install_packages_in_virtual_environment(env_directory_path, packages):
-    if not os.path.exists(env_directory_path):
-        print("Invalid path")
-        raise Exception("Invalid path")
-
-    my_os = platform.system()
-    for package in packages:
-        if my_os == "Windows":
-            os.system(f'powershell; &"{env_directory_path}/Scripts/pip" install {package}')
-        else:
-            os.system(f'"{env_directory_path}/bin/pip" install {package}')
+pip_manager = PipManager()
+pip_manager.add_pip_package("mkdocs")
+pip_manager.add_pip_package("mkdocs-material")
+pip_manager.add_pip_package("pymdown-extensions")
 
 
-def _get_site_packages_path(venv_path):
-    """Returns the site-packages path for a given virtual environment."""
-    python_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
-    
-    # Construct the expected site-packages path
-    if os.name == "nt":  # Windows
-        site_packages_path = os.path.join(venv_path, "Lib", "site-packages")
-    else:  # macOS/Linux
-        site_packages_path = os.path.join(venv_path, "lib", python_version, "site-packages")
-
-    return site_packages_path if os.path.exists(site_packages_path) else None
+def is_mkdocs_project(path):
+    return os.path.isfile(os.path.join(path, 'mkdocs.yml')) and os.path.isdir(os.path.join(path, 'docs'))
 
 
-def _use_other_venv_if_missing(package_name, other_venv_path, silent=False):
-    try:
-        importlib.import_module(package_name)
-        if not silent:
-            print(f"{package_name} is already installed in the current environment.")
-    except ImportError:
-        print(f"{package_name} not found. Using the package from the other environment.")
-        other_venv_path = _get_site_packages_path(other_venv_path)
-        if not other_venv_path or not os.path.exists(other_venv_path):
-            print(f"Error: site-packages directory not found at {other_venv_path}")
-            return
-        else:
-            print(f"Using site-packages directory found at {other_venv_path}")
-        if not other_venv_path in sys.path:
-            sys.path.append(other_venv_path)  # Add other venv's site-packages to sys.path
-        import mkdocs
-        #print("sys.path:", sys.path)  # Check Python's search paths
-        print("mkdocs location:", mkdocs.__file__)  # Verify where mkdocs is being imported from
-        
-
-def setup():
-    virtual_env_path = get_directory_path(__file__) + "/venv"
-    if not os.path.exists(virtual_env_path):
-        _python_virtual_environment(virtual_env_path)
-        _pip_install_packages_in_virtual_environment(
-            env_directory_path=virtual_env_path,
-            packages=["mkdocs", "mkdocs-material", "pymdown-extensions"]
-        )
-
-    _use_other_venv_if_missing("mkdocs", virtual_env_path, silent=True)
-    _use_other_venv_if_missing("mkdocs-material", virtual_env_path, silent=True)
-    _use_other_venv_if_missing("pymdown-extensions", virtual_env_path, silent=True)
+def list_mkdocs_projects(dir_path: str):
+    """
+    Returns a list of mkdocs projects in repo, relative to the dir path
+    """
+    mkdocs_projects = list()
+    for project in sorted(os.listdir(dir_path)):
+        proj_path = os.path.join(dir_path, project)
+        if is_mkdocs_project(proj_path):
+            mkdocs_projects.append(project)
 
 
-def mkdocs_new(docs_path: str):
-    setup()
+def mkdocs_default_project(docs_path: str, site_name: str = "My Docs"):
+    pip_manager.install_missing_modules()
+
     import mkdocs
-    from mkdocs.utils import write_file
+    import mkdocs.utils
     # Create the project directory and docs directory
     os.makedirs(docs_path+"/docs", exist_ok=True)
 
     # Write default mkdocs.yml file
     config_content = \
-"""site_name: My Docs
+f"""site_name: {site_name}
 
 theme:
   name: material
@@ -121,11 +76,85 @@ markdown_extensions:
   - pymdownx.tabbed
   - attr_list
 """
-    write_file(config_content.encode('utf-8'), docs_path + "/mkdocs.yml")
+    mkdocs.utils.write_file(config_content.encode('utf-8'), docs_path + "/mkdocs.yml")
+
+    # Write default index.md file
+    index_content = f"# Welcome to {site_name}\n\nThis is your homepage!"
+    mkdocs.utils.write_file(index_content.encode('utf-8'), docs_path + "/docs/index.md")
+
+    print(f"New MkDocs project created in: {docs_path}")
+
+
+# Combine multiple mkdocs projects into one
+def mkdocs_monorepo_project(docs_path: str):
+    pip_manager.add_pip_package("mkdocs-monorepo-plugin")
+    pip_manager.install_missing_modules()
+
+    import mkdocs
+    import mkdocs.utils
+    # Create the project directory and docs directory
+    os.makedirs(docs_path+"/docs", exist_ok=True)
+
+    # Write default mkdocs.yml file
+    config_content = \
+"""site_name: Combined MkDocs Site
+
+theme:
+  name: material
+
+  features:
+    - content.code.copy
+
+  palette:
+  # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Project 1: "!include ./projects/project1/mkdocs.yml"
+  - Project 2: "!include ./projects/project2/mkdocs.yml"
+
+markdown_extensions:
+  - codehilite:
+      guess_lang: false  # Ensures correct language highlighting
+  - fenced_code
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - attr_list
+plugins:
+  - monorepo
+"""
+    mkdocs.utils.write_file(config_content.encode('utf-8'), docs_path + "/mkdocs.yml")
 
     # Write default index.md file
     index_content = "# Welcome to MkDocs\n\nThis is your homepage!"
-    write_file(index_content.encode('utf-8'), docs_path + "/docs/index.md")
+    mkdocs.utils.write_file(index_content.encode('utf-8'), docs_path + "/docs/index.md")
+
+    mkdocs.utils.write_file(index_content.encode('utf-8'), docs_path + "/projects/project1/docs/index.md")
+    mkdocs.utils.write_file(index_content.encode('utf-8'), docs_path + "/projects/project2/docs/index.md")
+
+    mkdocs.utils.write_file("""
+site_name: Project1
+nav:
+  - Home: index.md    
+""".encode('utf-8'), docs_path + "/projects/project1/mkdocs.yml")
+    
+    mkdocs.utils.write_file("""
+site_name: Project2
+nav:
+  - Home: index.md    
+""".encode('utf-8'), docs_path + "/projects/project2/mkdocs.yml")
 
     print(f"New MkDocs project created in: {docs_path}")
 
@@ -139,20 +168,20 @@ def serve_mkdocs_project(docs_path, host="127.0.0.1", port=8000):
         host (str): Host address to bind the server (default: 127.0.0.1).
         port (int): Port number to serve the site (default: 8000).
     """
-    setup()
+    pip_manager.install_missing_modules()
     config_file = docs_path + "/mkdocs.yml"
     import mkdocs
-    from mkdocs.commands.serve import serve
+    import mkdocs.commands.serve
     try:
         # Start the MkDocs development server directly with the configuration file
         print(f"Serving MkDocs at http://{host}:{port}")
-        serve(config_file, host=host, port=port, livereload=True, watch_theme=True)
+        mkdocs.commands.serve.serve(config_file, host=host, port=port, livereload=True, watch_theme=True)
     except KeyboardInterrupt:
         print("\nServer stopped.")
 
 
 def build_mkdocs_documentation(docs_path):
-    setup()
+    pip_manager.install_missing_modules()
     import mkdocs
     from mkdocs.config import load_config
     from mkdocs.commands.build import build
@@ -180,24 +209,11 @@ def build_mkdocs_documentation(docs_path):
         print(f"Error while building documentation: {e}")
 
 
-def go_to_url(url: str):
-    import webbrowser
-    webbrowser.open(url, new=0, autoraise=True)
-
-
-def ensure_mkdocs_project_setup(docs_path: str):
-     if not os.path.exists(docs_path):
-        mkdocs_new(docs_path)
-
-
 def compile_mkdocs(docs_path: str, show_in_browser: bool = True):
     if not os.path.exists(docs_path):
-        mkdocs_new(docs_path)
+        mkdocs_default_project(docs_path)
     build_mkdocs_documentation(docs_path)
-    # TODO: check if build was successfull
+
     if show_in_browser:
-        go_to_url("http://127.0.0.1:8000")
+        open_webbrowser("http://127.0.0.1:8000")
         serve_mkdocs_project(docs_path)
-
-
-

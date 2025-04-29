@@ -15,4 +15,4 @@ docs_dir = get_directory_path(__file__) + "/docs"
 # The path where to look for files with documentation
 src_dir = get_directory_path(__file__, 2)
 
-vicmil_generate_project_documentation(docs_dir, src_dir)
+vmdoc_generate(docs_dir, src_dir)

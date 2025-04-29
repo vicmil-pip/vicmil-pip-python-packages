@@ -9,5 +9,7 @@ sys.path.append(str(Path(__file__).resolve().parents[5]))
 
 from vicmil_pip.packages.pyMkDocs import *
 
-package_name = get_directory_path(__file__).split("/")[-1]
-generate_package_documentation(package_name)
+src_dir = get_directory_path(__file__)
+docs_dir = get_directory_path(__file__) + "/docs"
+
+vmdoc_generate(docs_dir=docs_dir, src_dir=src_dir)

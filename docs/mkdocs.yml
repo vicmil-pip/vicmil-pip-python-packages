@@ -22,6 +22,9 @@ theme:
         name: Switch to light mode
 
 nav:
+  - files:
+    - /__init__.py: vmdoc/_init_.py_b76991.md
+    - /include/vmdoc.py: vmdoc/vmdoc.py_99ab01.md
   - Home: index.md
   - vmdoc: vmdoc/vmdocs.md
 markdown_extensions:
