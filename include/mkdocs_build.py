@@ -190,13 +190,14 @@ def ensure_mkdocs_project_setup(docs_path: str):
         mkdocs_new(docs_path)
 
 
-def compile_mkdocs(docs_path: str):
+def compile_mkdocs(docs_path: str, show_in_browser: bool = True):
     if not os.path.exists(docs_path):
         mkdocs_new(docs_path)
     build_mkdocs_documentation(docs_path)
     # TODO: check if build was successfull
-    go_to_url("http://127.0.0.1:8000")
-    serve_mkdocs_project(docs_path)
+    if show_in_browser:
+        go_to_url("http://127.0.0.1:8000")
+        serve_mkdocs_project(docs_path)
 
 
 

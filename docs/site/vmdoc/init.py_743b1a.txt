@@ -77,7 +77,7 @@ vicmil_generate_project_documentation(docs_dir, src_dir, gitignore_content)
 ```
 [vmdoc:end]
 """
-def vicmil_generate_project_documentation(docs_dir: str, src_dir: str) -> None:
+def vicmil_generate_project_documentation(docs_dir: str, src_dir: str, show_in_browser: bool) -> None:
     # Ensure the mkdocs project is setup in the docs folder
     ensure_mkdocs_project_setup(docs_dir)
 
@@ -87,7 +87,7 @@ def vicmil_generate_project_documentation(docs_dir: str, src_dir: str) -> None:
     vmdoc_generate_markdown_files(src_dir, output_dir)
 
     # Compile project and show the result in the browser
-    compile_mkdocs(docs_dir)
+    compile_mkdocs(docs_dir, show_in_browser=show_in_browser)
 
 
 def update_packageDocs_readme():
@@ -141,6 +141,8 @@ def generate_package_documentation(package_name: str):
         # Ensure the mkdocs project is setup in the docs folder
         ensure_mkdocs_project_setup(docs_dir)
 
+        vicmil_generate_project_documentation(docs_dir, src_dir, show_in_browser=False)
+
         # Copy the documentation to packageDocs
         package_docs_dir = get_directory_path(__file__, 1) + "/packageDocs"
         if os.path.exists(package_docs_dir):
@@ -148,7 +150,10 @@ def generate_package_documentation(package_name: str):
 
             update_packageDocs_readme()
 
-        vicmil_generate_project_documentation(docs_dir, src_dir)
+        go_to_url("http://127.0.0.1:8000")
+        serve_mkdocs_project(docs_dir)
+
+        
 
     else:
         print(f"path {docs_dir} does not exist!")
