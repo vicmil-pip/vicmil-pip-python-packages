@@ -9,4 +9,4 @@ sys.path.append(str(Path(__file__).resolve().parents[5]))
 
 from vicmil_pip.packages.pyMkDocs import *
 
-compile_mkdocs(get_directory(__file__) + "/docs")
+compile_mkdocs(get_directory_path(__file__) + "/docs")

@@ -4,8 +4,8 @@ import platform
 import importlib
 import sys
 
-def get_directory(file_path: str):
-    return str(pathlib.Path(file_path).parents[0].resolve()).replace("\\", "/")
+def get_directory_path(__file__in, up_directories=0):
+    return str(pathlib.Path(__file__in).parents[up_directories].resolve()).replace("\\", "/")
 
 
 def _python_virtual_environment(env_directory_path):
@@ -65,7 +65,7 @@ def _use_other_venv_if_missing(package_name, other_venv_path, silent=False):
         
 
 def setup():
-    virtual_env_path = get_directory(__file__) + "/venv"
+    virtual_env_path = get_directory_path(__file__) + "/venv"
     if not os.path.exists(virtual_env_path):
         _python_virtual_environment(virtual_env_path)
         _pip_install_packages_in_virtual_environment(
@@ -112,6 +112,7 @@ theme:
 
 nav:
   - Home: index.md
+  - vmdoc: vmdoc/vmdocs.md
 markdown_extensions:
   - codehilite:
       guess_lang: false  # Ensures correct language highlighting
@@ -182,6 +183,11 @@ def build_mkdocs_documentation(docs_path):
 def go_to_url(url: str):
     import webbrowser
     webbrowser.open(url, new=0, autoraise=True)
+
+
+def ensure_mkdocs_project_setup(docs_path: str):
+     if not os.path.exists(docs_path):
+        mkdocs_new(docs_path)
 
 
 def compile_mkdocs(docs_path: str):
