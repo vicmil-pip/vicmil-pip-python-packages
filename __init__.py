@@ -5,6 +5,9 @@ import importlib
 import sys
 import shutil
 import fnmatch
+import hashlib
+import string
+import random
 from typing import List, Dict
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[0]))
 
@@ -171,19 +174,84 @@ class PipManager:
             include_other_venv(self.venv_path)
 
 
-def copy_directory(src_dir, dest_dir):
+def safe_copy_directory(src, dst):
     """
-    Copies the contents of src_dir to dest_dir.
-    If dest_dir exists, it remove its content
+    Recursively copies contents of src to dst safely, avoiding recursion issues.
+    
+    Parameters:
+    src (str): Source directory path.
+    dst (str): Destination directory path.
     """
-    if not os.path.exists(src_dir):
-        raise FileNotFoundError(f"Source directory '{src_dir}' does not exist.")
+    src = pathlib.Path(src).resolve()
+    dst = pathlib.Path(dst).resolve()
+
+    # Prevent recursive copy into subdirectory of itself
+    if dst in src.parents or src == dst:
+        raise ValueError("Destination cannot be the source or inside the source.")
+
+    if not src.is_dir():
+        raise NotADirectoryError(f"Source directory '{src}' does not exist or is not a directory.")
+
+    os.makedirs(dst, exist_ok=True)
+
+    for root, dirs, files in os.walk(src):
+        rel_path = pathlib.Path(root).relative_to(src)
+        target_dir = dst / rel_path
+        os.makedirs(target_dir, exist_ok=True)
+
+        for file in files:
+            src_file = pathlib.Path(root) / file
+            dst_file = target_dir / file
+            shutil.copy2(src_file, dst_file)
+
+
+def delete_folder_with_contents(file: str):
+    if os.path.exists(file):
+        shutil.rmtree(file)  # Deletes the folder and its contents
+
+
+def safe_copy_directory_with_ignore(src, dst, gitignore_str):
+    """
+    Recursively copies contents of src to dst safely, ignoring files/directories 
+    that match gitignore-style patterns using a custom pattern matcher.
+
+    Parameters:
+    src (str): Source directory path.
+    dst (str): Destination directory path.
+    gitignore_str (str): Gitignore-style pattern string.
+    """
+    src = pathlib.Path(src).resolve()
+    dst = pathlib.Path(dst).resolve()
+
+    if dst in src.parents or src == dst:
+        raise ValueError("Destination cannot be the source or inside the source.")
+
+    if not src.is_dir():
+        raise NotADirectoryError(f"Source directory '{src}' does not exist or is not a directory.")
     
-    # Remove dest_dir if it already exists
-    if os.path.exists(dest_dir):
-        shutil.rmtree(dest_dir)
-    
-    shutil.copytree(src_dir, dest_dir)
+    delete_folder_with_contents(dst)
+
+    # Initialize and load patterns
+    pattern_matcher = GitignorePatternMatcher()
+    pattern_matcher.add_pattern_str(gitignore_str)
+
+    os.makedirs(dst, exist_ok=True)
+
+    for root, dirs, files in os.walk(src):
+        rel_path = pathlib.Path(root).relative_to(src)
+
+        # Prune ignored directories in-place to avoid descending into them
+        dirs[:] = [d for d in dirs if pattern_matcher.include_file(rel_path / d)]
+
+        target_dir = dst / rel_path
+        os.makedirs(target_dir, exist_ok=True)
+
+        for file in files:
+            relative_file_path = rel_path / file
+            if pattern_matcher.include_file(relative_file_path):
+                src_file = pathlib.Path(root) / file
+                dst_file = target_dir / file
+                shutil.copy2(src_file, dst_file)
 
 
 def write_text_to_file(file_path: str, contents: str):
@@ -197,6 +265,19 @@ def write_text_to_file(file_path: str, contents: str):
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, 'w', encoding='utf-8') as file:
         file.write(contents)
+
+
+def list_installed_vicmil_packages():
+    dirs = os.listdir(get_directory_path(__file__, 1))        
+    vicmil_packages = list()
+    for f in dirs:
+        if f == "__pycache__":
+            continue
+        if f == "venv":
+            continue
+        vicmil_packages.append(f)
+
+    return vicmil_packages
     
 
 class GitignorePatternMatcher:
@@ -215,19 +296,23 @@ class GitignorePatternMatcher:
             if not line:
                 continue
 
-            is_negation = line.startswith('!')
-            pattern = line[1:] if is_negation else line
-            self.pattern_list.append((pattern, is_negation))
+            line_starts_with_excl = line.startswith('!')
+            pattern = line[1:] if line_starts_with_excl else line
+            self.pattern_list.append((pattern, line_starts_with_excl))
 
 
-    def match_file(self, file_path: str):
-        match = False  # Default: do not include
+    def include_file(self, file_path: str):
+        include_file = True  # Default: include file
 
-        for pattern, is_negation in self.pattern_list:
+        for pattern, line_starts_with_excl in self.pattern_list:
             if fnmatch.fnmatch(file_path, pattern):
-                match = is_negation  # Override based on whether it's a negation (!)
+                include_file = line_starts_with_excl  # Override based on whether it's a negation (!)
         
-        return match
+        return include_file
+    
+
+    def ignore_file(self, file_path: str):
+        return not self.include_file(file_path)
 
 
     def list_matching_files(self, directory_path: str):
@@ -237,7 +322,7 @@ class GitignorePatternMatcher:
         for root, dirs, files in os.walk(directory_path):
             for file in files:
                 rel_path = os.path.relpath(os.path.join(root, file), directory_path).replace("\\", "/")
-                if self.match_file(rel_path):
+                if self.include_file(rel_path):
                     matching_files.append(os.path.join(root, file))
 
         return matching_files
@@ -376,3 +461,16 @@ def download_github_repo_as_zip(zip_url: str, output_zip_file: str):
         print(f"Download complete: {output_zip_file}")
     except Exception as e:
         print(f"Error: {e}")
+
+
+def hash_path(rel_path: str) -> str:
+    """Generate a short hash of the relative path."""
+    return hashlib.md5(rel_path.encode('utf-8')).hexdigest()[:6]
+
+
+def generate_random_letters(count=5):
+    return ''.join(random.choices(string.ascii_lowercase, k=count))
+
+
+def generate_random_numbers(count=5):
+    return ''.join(str(random.randint(0, 9)) for _ in range(count))
