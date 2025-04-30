@@ -15,7 +15,50 @@ sys.path.append(str(Path(__file__).resolve().parents[5]))
 
 from vicmil_pip.packages.pyUtil import *
 import hashlib
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+
+def update_nav_section(mkdocs_yml_path: str, nav_section_name: str, section_entries: List[Tuple[str, str]]):
+    """
+    Updates the mkdocs.yml file by replacing or inserting a section under 'nav'.
+
+    Args:
+        mkdocs_yml_path: Path to the mkdocs.yml file.
+        nav_section_name: The name of the section to update (e.g., 'files').
+        section_entries: List of (source_filename, target_path) tuples.
+                         Example: [('file1.py', 'vmdoc/file1_hash.txt'), ...]
+    """
+    pip_manager = PipManager()
+    pip_manager.add_pip_package("PyYAML")
+    pip_manager.install_missing_modules()
+
+    import yaml
+    if not os.path.exists(mkdocs_yml_path):
+        print(f"mkdocs.yml not found at: {mkdocs_yml_path}")
+        return
+
+    with open(mkdocs_yml_path, 'r') as f:
+        config = yaml.safe_load(f) or {}
+
+    nav = config.get("nav", [])
+    if not isinstance(nav, list):
+        print("Invalid format: 'nav' section should be a list.")
+        return
+
+    # Remove any existing section with the given name
+    nav = [item for item in nav if not (isinstance(item, dict) and nav_section_name in item)]
+
+    # Convert tuples to dicts for YAML formatting
+    nav_section_items = [{source: target} for source, target in section_entries]
+
+    # Add the new section
+    nav.append({nav_section_name: nav_section_items})
+    config["nav"] = nav
+
+    with open(mkdocs_yml_path, 'w') as f:
+        yaml.dump(config, f, sort_keys=False)
+
+    print(f"Updated '{nav_section_name}' section in mkdocs.yml.")
 
 
 class VmDocsGenerator:
@@ -110,7 +153,7 @@ class VmDocsGenerator:
         entries = []
         for _, rel_path in sorted(self._added_files):
             doc_name = self._get_file_base_name_with_hash(rel_path)
-            md_file_path = f"vmdoc/{doc_name}.md"
+            md_file_path = f"vmdoc/{doc_name}.txt"
             entries.append(f"    - {rel_path}: {md_file_path}")
         return entries
 
@@ -178,7 +221,7 @@ class VmDocsGenerator:
             description = get_docs_tag_contents_joined(src_file_path, '[vmdoc:description ]'.replace(" ", ""), '[vmdoc:enddescription ]'.replace(" ", ""))
             base_name_with_hash = self._get_file_base_name_with_hash(src_relative_path)
 
-            vmdoc_description += f"- [{src_relative_path}]( {base_name_with_hash}.md ) - {description}\n"
+            vmdoc_description += f"- [{src_relative_path}]( {base_name_with_hash}.md ) - {description}\n\n"
 
         with open(vmdoc_md_file_path, 'w', encoding='utf-8') as f:
             f.write(vmdoc_description)
@@ -279,9 +322,4 @@ def get_docs_tag_contents(file_path: str, start_tag: str, end_tag: str) -> List[
 def get_docs_tag_contents_joined(file_path: str, start_tag: str, end_tag: str) -> str:
     doc_tag_content = get_docs_tag_contents(file_path, start_tag, end_tag)
     return ('\n\n'.join(doc_tag_content)).strip()
-
-
-def hash_path(rel_path: str) -> str:
-    """Generate a short hash of the relative path."""
-    return hashlib.md5(rel_path.encode('utf-8')).hexdigest()[:6]
 

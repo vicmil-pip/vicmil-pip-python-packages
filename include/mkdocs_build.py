@@ -31,8 +31,10 @@ def list_mkdocs_projects(dir_path: str):
         if is_mkdocs_project(proj_path):
             mkdocs_projects.append(project)
 
+    return mkdocs_projects
 
-def mkdocs_default_project(docs_path: str, site_name: str = "My Docs"):
+
+def mkdocs_default_project(docs_path: str, site_name: str = "My Docs " + generate_random_numbers(6)):
     pip_manager.install_missing_modules()
 
     import mkdocs
@@ -122,8 +124,6 @@ theme:
 
 nav:
   - Home: index.md
-  - Project 1: "!include ./projects/project1/mkdocs.yml"
-  - Project 2: "!include ./projects/project2/mkdocs.yml"
 
 markdown_extensions:
   - codehilite:
@@ -134,6 +134,7 @@ markdown_extensions:
   - attr_list
 plugins:
   - monorepo
+  - search
 """
     mkdocs.utils.write_file(config_content.encode('utf-8'), docs_path + "/mkdocs.yml")
 

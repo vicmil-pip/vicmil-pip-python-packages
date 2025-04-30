@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[0])) 
 
 from include.mkdocs_build import *
-from include.vmdoc import VmDocsGenerator
+from include.vmdoc import VmDocsGenerator, update_nav_section
 import shutil
 
 
@@ -110,10 +110,24 @@ class VmDocsMonoRepoGenerator:
             return
         
         self._added_projects.append((doc_path, project_name))
+    
 
+    def update_nav(self):
+        # Update nav/projects with new data
+        project_entries = list()
 
-    def update_nav():
-        pass
+        projects_dir = f"{self.docs_dir}/projects"
+        if not os.path.exists(projects_dir):
+            print(f"Invalid path: {projects_dir}")
+            return
+
+        projects = list_mkdocs_projects(projects_dir)
+        for project_name in projects:
+            project_entries.append((project_name, f"!include ./projects/{project_name}/mkdocs.yml"))
+
+        print(project_entries)
+
+        update_nav_section(f"{self.docs_dir}/mkdocs.yml", "projects", project_entries)
     
 
     def generate(self, show_in_browser: bool = True):
@@ -123,8 +137,10 @@ class VmDocsMonoRepoGenerator:
         # Copy all the repos to the target
         for path, project_name in self._added_projects:
             output_path = self.docs_dir + "/projects/" + project_name
-            copy_directory(path, output_path)
+            print(f"copy {path} to {output_path}")
+            safe_copy_directory_with_ignore(path, output_path, "site/*")
 
+        self.update_nav()
         compile_mkdocs(self.docs_dir, show_in_browser=show_in_browser)
 
         
