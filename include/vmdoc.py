@@ -93,7 +93,8 @@ class VmDocsGenerator:
 
         lines = self._remove_old_nav_files_section(lines)
         new_entries = self._generate_nav_file_entries()
-        lines = self._insert_new_nav_files_section(lines, new_entries)
+        if len(new_entries) > 0:
+            lines = self._insert_new_nav_files_section(lines, new_entries)
 
         with open(mkdocs_yml_file_path, 'w') as f:
             f.writelines(lines)
