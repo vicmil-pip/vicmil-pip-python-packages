@@ -1,0 +1,10 @@
+{
+    "user1": {
+      "hashed_password": "scrypt:32768:8:1$BXlgImEjalMLP4bO$dea4e1636b898ffb5eb6b68661635304070d60c5966d1cc07671ff65ecb841a3a1fdd3729a1407d8f38f4e4f7e5cf70b2a55298cc694a577fda047d8a2cc4b06",
+      "version": 1,
+      "permissions": [
+        "homepage"
+      ]
+    }
+}
+  
