@@ -147,6 +147,9 @@ class PipManager:
         for requirement in requirements:
             self.add_pip_package(requirement)
 
+    def include_other_venv(self):
+        include_other_venv(self.venv_path)
+
     def install_missing_modules(self):
         """
         [vmdoc:start]
@@ -171,7 +174,7 @@ class PipManager:
             missing_pip_packages = list(missing_pip_packages)
             pip_install_packages_in_virtual_environment(self.venv_path, missing_pip_packages)
 
-            include_other_venv(self.venv_path)
+            self.include_other_venv()
 
 
 def safe_copy_directory(src, dst):
