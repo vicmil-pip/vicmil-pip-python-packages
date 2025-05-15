@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #eef2f3, #dfe9f3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      position: relative;
+    }
+
+    .username {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      font-size: 0.95rem;
+      color: #444;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .logout-btn {
+      position: absolute;
+      top: 1rem;
+      left: 1.5rem;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      background-color: #ff4d4d;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background-color: #d93636;
+    }
+
+    .container {
+      background: #fff;
+      padding: 3rem 4rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .container:hover {
+      transform: translateY(-5px);
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #222;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.05rem;
+      color: #555;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .btn-login {
+      display: inline-block;
+      padding: 0.75rem 1.75rem;
+      font-size: 1rem;
+      font-weight: 500;
+      background-color: #0069ed;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-bottom: 1.25rem;
+    }
+
+    .btn-login:hover {
+      background-color: #0053ba;
+    }
+
+    .doc-link {
+      display: inline-block;
+      font-size: 0.95rem;
+      color: #0069ed;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .doc-link:hover {
+      color: #003f8c;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  {% if username %}
+    <div class="username">Logged in as <strong>{{ username }}</strong></div>
+    <form method="POST" action="/logout">
+      <button class="logout-btn">Logout</button>
+    </form>
+  {% endif %}
+
+  <div class="container">
+    <h1>Welcome to the Documentation Portal</h1>
+    <p>
+      Access secure documents by logging in with your authorized credentials.
+      This portal provides internal documentation, guidelines, onboarding materials, and resources.
+    </p>
+    <p>
+      Keep your credentials secure and log out after each session.
+    </p>
+
+    {% if not username %}
+      <a href="/login" class="btn-login">Login</a>
+    {% endif %}
+
+    {% if username %}
+      <a href="/user/documentation.html" class="doc-link">View Documentation</a><br/>
+
+      {% if user_role == "admin" %}
+        <a href="/admin/index.html" class="doc-link">Admin Panel</a>
+      {% endif %}
+    {% endif %}
+  </div>
+
+</body>
+</html>

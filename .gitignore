@@ -1,0 +1,30 @@
+# Virtual environments (common names)
+venv/
+env/
+.venv/
+.env/
+
+# Also ignore virtual environments in subdirectories
+**/venv/
+**/env/
+**/.venv/
+**/.env/
+
+# VS Code settings
+.vscode/
+**/.vscode/
+
+# Python bytecode and cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Binary/build folders
+bin/
+**/bin/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+Desktop.ini
