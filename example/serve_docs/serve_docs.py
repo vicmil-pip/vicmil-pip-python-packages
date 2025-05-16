@@ -6,7 +6,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[3]))
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[4]))
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[5]))
 
-from vicmil_pip.packages.pyFlaskBlueprints.include.flask_app_util import *
+from vicmil_pip.packages.pyFlaskUtil.include.flask_app_util import *
 
 from flask import jsonify
 

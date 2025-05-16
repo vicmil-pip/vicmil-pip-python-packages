@@ -13,7 +13,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[4]))
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[5]))
 
 from vicmil_pip.packages.pyUtil import *
-from vicmil_pip.packages.pyFlaskBlueprints.include.user_manager import UserManager
+from vicmil_pip.packages.pyFlaskUtil.include.user_manager import UserManager
 
 pip_manager = PipManager()
 pip_manager.add_module("flask", "flask")
