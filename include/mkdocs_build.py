@@ -9,8 +9,6 @@ sys.path.append(str(Path(__file__).resolve().parents[5]))
 
 from vicmil_pip.packages.pyUtil import *
 
-import yaml
-
 pip_manager = PipManager()
 pip_manager.add_pip_package("mkdocs")
 pip_manager.add_pip_package("mkdocs-material")
