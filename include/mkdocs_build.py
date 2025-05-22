@@ -10,6 +10,7 @@ sys.path.append(str(Path(__file__).resolve().parents[5]))
 from vicmil_pip.packages.pyUtil import *
 
 pip_manager = PipManager()
+pip_manager.venv_path = get_directory_path(__file__) + "/venv"
 pip_manager.add_pip_package("mkdocs")
 pip_manager.add_pip_package("mkdocs-material")
 pip_manager.add_pip_package("pymdown-extensions")
