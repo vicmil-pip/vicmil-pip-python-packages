@@ -44,7 +44,10 @@ def get_venv_site_packages_path(venv_path):
     
     # Construct the expected site-packages path
     if platform.system() == "Windows": # Windows
+        # The site package path may vary on windows, so we check for both
         site_packages_path = os.path.join(venv_path, "Lib", "site-packages")
+        if not os.path.exists(site_packages_path):
+            site_packages_path = os.path.join(venv_path, "lib", python_version, "site-packages")
     else:  # macOS/Linux
         site_packages_path = os.path.join(venv_path, "lib", python_version, "site-packages")
 
