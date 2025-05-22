@@ -57,7 +57,8 @@ def get_venv_site_packages_path(venv_path):
 def get_venv_pip_path(env_directory_path):
     if platform.system() == "Windows":
         # The path may vary on windows, so we need to check for both the scripts path and the bin path
-        script_path = f'{env_directory_path}/Scripts/pip'
+        script_path = f'{env_directory_path}/Scripts/pip.exe'
+        print("script_path", script_path)
         if os.path.exists(script_path):
             return script_path
         bin_path = f'{env_directory_path}/bin/pip'
