@@ -136,8 +136,8 @@ class VmDocsGenerator:
 
         lines = self._remove_old_nav_files_section(lines)
         new_entries = self._generate_nav_file_entries()
-        if len(new_entries) > 0:
-            lines = self._insert_new_nav_files_section(lines, new_entries)
+        #if len(new_entries) > 0:
+            #lines = self._insert_new_nav_files_section(lines, new_entries)
 
         with open(mkdocs_yml_file_path, 'w') as f:
             f.writelines(lines)
@@ -217,7 +217,9 @@ class VmDocsGenerator:
         # Prepare the vmdocs.md overview file
         vmdoc_description = "# Vmdoc Overview\n\nThis document lists all the generated documentation files.\n\n"
 
-        for src_file_path, src_relative_path in self._added_files:
+        added_files_sorted = sorted(self._added_files, key=lambda x: x[1])
+
+        for src_file_path, src_relative_path in added_files_sorted:
             description = get_docs_tag_contents_joined(src_file_path, '[vmdoc:description ]'.replace(" ", ""), '[vmdoc:enddescription ]'.replace(" ", ""))
             base_name_with_hash = self._get_file_base_name_with_hash(src_relative_path)
 
@@ -250,6 +252,11 @@ class VmDocsGenerator:
 
             output_md_path = f"{self.docs_dir}/docs/vmdoc/{md_file_name}" 
             output_txt_path = f"{self.docs_dir}/docs/vmdoc/{txt_file_name}" 
+
+            # Remove all the lines with [vmdoc:skip_line] from doc_tag_content
+            doc_tag_content_lines = doc_tag_content.split("\n")
+            filtered_tag_content = [s for s in doc_tag_content_lines if "[vmdoc:skip_line]" not in s]
+            doc_tag_content = "\n".join(filtered_tag_content)
 
             metadata = (
             f"---\n"
